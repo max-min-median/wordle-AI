@@ -42,6 +42,7 @@ const color = {
                     if (answers.has(word)) {
                         console.log(guessesForWord(word));
                     } else if (word === 'Q') {
+                        console.log();
                         break;
                     } else {
                         console.log(color.brightred("Not a valid Wordle solution!\n"))
@@ -89,7 +90,9 @@ async function AIPlay() {
                     console.log(`${color.lightblue('Thank you, I had fun!! :D\n')}`);
                     return;
                 } else {
-                    console.log(`${color.brightred('Invalid feedback, please enter exactly 5 characters, made up of: B, Y, G, 0, 1 or 2. ')}${color.lightblue('Q')}${color.brightred(' to quit.')}`);
+                    console.log(`${color.brightred('Invalid feedback, please enter exactly 5 characters, made up of: B, Y, G, 0, 1 or 2. ')}`);
+                    console.log(`${color.brightred("For example, if you're thinking of LUNAR and I guess SOLAR, you would enter ")}${color.brightwhite("00122")}${color.brightred(" or ")}${color.brightwhite("BBYGG")}`);
+                    console.log(`${color.brightred("Type ")}${color.lightblue('Q')}${color.brightred(' to quit.')}`);
                 }
             }
         }
