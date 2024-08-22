@@ -19,6 +19,10 @@ const color = {
     lightblue: w => `\x1b[38;5;27m${w}\x1b[0m`,
 };
 
+
+/**
+ * Main menu
+ */
 (async function main() {
     while (true) {
         console.log(`${color.lightblue("MMM's Wordle AI v1.0.0")} by ${color.magenta("max-min-median")}`);
@@ -38,6 +42,7 @@ const color = {
                     if (answers.has(word)) {
                         console.log(guessesForWord(word));
                     } else if (word === 'Q') {
+                        console.log();
                         break;
                     } else {
                         console.log(color.brightred("Not a valid Wordle solution!\n"))
@@ -50,6 +55,11 @@ const color = {
     }
 })();
 
+
+/**
+ * 'Plays' Wordle by trying to guess a word only known to the user. Expects input from the user as to the color-coded feedback of each guess.
+ * The feedback must be provided as a 5-character string with only these characters: `B, Y, G` or the corresponding numbers `0, 1, 2`.
+ */
 async function AIPlay() {
     console.log(`\nLet's play Wordle! I'll guess and you tell me the colors! :)`);
     while (true) {
@@ -80,7 +90,9 @@ async function AIPlay() {
                     console.log(`${color.lightblue('Thank you, I had fun!! :D\n')}`);
                     return;
                 } else {
-                    console.log(`${color.brightred('Invalid feedback, please enter exactly 5 characters, made up of: B, Y, G, 0, 1 or 2. ')}${color.lightblue('Q')}${color.brightred(' to quit.')}`);
+                    console.log(`${color.brightred('Invalid feedback, please enter exactly 5 characters, made up of: B, Y, G, 0, 1 or 2. ')}`);
+                    console.log(`${color.brightred("For example, if you're thinking of LUNAR and I guess SOLAR, you would enter ")}${color.brightwhite("00122")}${color.brightred(" or ")}${color.brightwhite("BBYGG")}`);
+                    console.log(`${color.brightred("Type ")}${color.lightblue('Q')}${color.brightred(' to quit.')}`);
                 }
             }
         }
@@ -88,6 +100,10 @@ async function AIPlay() {
 };
 
 
+/**
+ * Calls `guessesForWord` on each of the 2315 words in the solution list. Then calculates the mean number of guesses required per word.
+ * Reads from and writes sequences of guesses to `all_guesses.txt`. Deleting this file will cause this function perform a recalculation.
+ */
 function computeMeanGuesses() {
     console.log();
     let allGuessesList = readFile('all_guesses.txt');
@@ -106,9 +122,8 @@ function computeMeanGuesses() {
     console.log("Compared to MIT's (3.421) =", totalGuesses / allGuessesList.length / 3.421, "\n");
 }
 
-
 /**
- * Returns the sequence of guesses that this AI would eventually go through to guess `word`.
+ * Returns the sequence of guesses that this AI would eventually use to guess `word`.
  */
 function guessesForWord(word) {
     let myList = filteredList('ROATE', currList.slice(), colorCode('ROATE', word));
@@ -125,6 +140,7 @@ function guessesForWord(word) {
  * Returns a new (sub-)list of words from `currList` which satisfy the `colorCode` obtained by guessing the word `guess`.
  */
 function filteredList(guess, currList, colCode) { return currList.filter(word => colorCode(guess, word) === colCode); }
+
 
 /**
  * Returns the word which minimizes the expected length of the new list of words obtained by guessing it.
@@ -144,6 +160,7 @@ function bestWord(currList) {
     return best;
 }
 
+
 /** 
  * Returns a color-coding as a ternary number with 0 = black, 1 = yellow, 2 = green.
  * @example If solution is LOGIC, guessing LIMBO returns 190 (dec) = 21001 (ternary).
@@ -158,7 +175,6 @@ function colorCode(guess, solution) {
     //     return result;
     // }
     // result = 0;
-
     let result = 0;
 
     if (typeof guess === 'number') guess = allWordsArray[guess];
