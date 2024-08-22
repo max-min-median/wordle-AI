@@ -107,6 +107,9 @@ function computeMeanGuesses() {
 }
 
 
+/**
+ * Returns the sequence of guesses that this AI would eventually go through to guess `word`.
+ */
 function guessesForWord(word) {
     let myList = filteredList('ROATE', currList.slice(), colorCode('ROATE', word));
     const guesses = ['ROATE'];
@@ -128,12 +131,11 @@ function filteredList(guess, currList, colCode) { return currList.filter(word =>
  */
 function bestWord(currList) {
     if (currList.length <= 2) return currList[0];
-    let best = undefined, minExpectation = Infinity, bestIsASolution = false;
+    let best = undefined, minExpectation = Infinity;
     const tryList = [];
     for (const word of allWordsArray) {
         const expectation = expectedBucketSize(word, currList);
-        if (expectation < minExpectation || (expectation === minExpectation && !bestIsASolution && answers.has(word)))
-            best = word, minExpectation = expectation, bestIsASolution = answers.has(word);
+        if (expectation < minExpectation) best = word, minExpectation = expectation;
             // console.log(`Found new best word: ${best} (Expectation: ${minExpectation})`);
         // tryList.push([word, expectation]);
     }
@@ -202,7 +204,7 @@ function expectedBucketSize(guess, currList) {
     for (const bucketSize of buckets.values()) {
         sumSq += bucketSize ** 2;
     }
-    return sumSq / currList.length;
+    return sumSq / currList.length * (answers.has(guess) ? ((currList.length - 1) / currList.length) : 1);
 }
 
 function colorize(guess, colorCode) {
