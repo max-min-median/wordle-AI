@@ -15,6 +15,7 @@ node wordle.js
 ---
 ### [1] Player mode
 ![Option 1](./wordle1.png)
+
 In Player mode, you try to guess a random word chosen from 2,315 possible words. However, this version comes with a trainer: You will be able to see the expected list size that would result from guessing your word, as well as the AI's recommended word and expected list size. Lower = Better!
 
 Special commands:  
@@ -25,6 +26,7 @@ Special commands:
 ---
 ### [2] AI mode
 ![Option 2](./wordle2.png)
+
 In AI mode, the computer plays and you 'host' the game!!
 Select a 5-letter solution word and provide the computer with color-coded feedback for each of its guesses. Green = `G` = `2`, Yellow = `Y` = `1`, Black = `B` = `0`. Examples of suitable feedback:
 
