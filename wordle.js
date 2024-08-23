@@ -11,10 +11,13 @@ readFile("answers.txt").forEach((x, i) => {answers.set(x.toUpperCase(), allWords
 
 const color = {
     brightwhite: w => `\x1b[1m${w}\x1b[0m`,
-    green: w => `\x1b[1;42m${w}\x1b[0m`,
-    yellow: w => `\x1b[1;43m${w}\x1b[0m`,
+    greenBG: w => `\x1b[1;42m${w}\x1b[0m`,
+    yellowBG: w => `\x1b[1;43m${w}\x1b[0m`,
     red: w => `\x1b[31m${w}\x1b[0m`,
+    yellow: w => `\x1b[33m${w}\x1b[0m`,
+    green: w => `\x1b[92m${w}\x1b[0m`,    
     brightred: w => `\x1b[91m${w}\x1b[0m`,
+    gray: w => `\x1b[90m${w}\x1b[0m`,
     magenta: w => `\x1b[1;95m${w}\x1b[0m`,
     lightblue: w => `\x1b[38;5;27m${w}\x1b[0m`,
 };
@@ -25,7 +28,7 @@ const color = {
  */
 (async function main() {
     while (true) {
-        console.log(`${color.lightblue("MMM's Wordle AI v1.0.0")} by ${color.magenta("max-min-median")}`);
+        console.log(`${color.lightblue("MMM's Wordle AI v1.0.0")} by ${color.green("max-min-median")}`);
         console.log(`──────────────────────────────────────────`);
         console.log(`${color.brightwhite('[1]')} Play Wordle! (under development!)`);
         console.log(`${color.brightwhite('[2]')} Let the AI guess your word`);
@@ -34,7 +37,7 @@ const color = {
         console.log(`${color.brightwhite('[Q]')} Quit\n`);
         const selection = (await getInput(`Select an option: `)).toUpperCase().trim();
         switch (selection) {
-            case '1': console.log(color.brightred('\nSorry, this feature is still under development!\n(I know, how silly is it to not be able to play Wordle on a Wordle app...)\n')); break;
+            case '1': await playWordle(); break; // console.log(color.brightred('\nSorry, this feature is still under development!\n(I know, how silly is it to not be able to play Wordle on a Wordle app...)\n')); break;
             case '2': await AIPlay(); break;
             case '3':
                 while (true) {
@@ -56,12 +59,51 @@ const color = {
 })();
 
 
+async function playWordle() {
+    console.log(`${color.yellow("\nLet's play Wordle! Try to guess a 5-letter word! :) ")}${color.lightblue('Q')}${color.yellow(" to quit")}`);
+    while (true) {
+        const guesses = [];
+        let myList = currList.slice();
+        const solution = [...answers.keys()][Math.floor(Math.random() * answers.size) + 1];
+        // console.log(`The secret answer is ${solution}!`);
+        while (true) {
+            console.log();
+            guesses.forEach(([guess, colorCode, poss, exp, best, bestExp], i) => console.log(`Guess #${i+1}: ${colorize(guess, colorCode)} (${poss} possibilities) ${color.magenta(`[E(X) = ${exp.toFixed(3)}]`)}   ${color.lightblue(`best: ${best} (E(X) = ${bestExp.toFixed(3)})`)}`));
+            if (guesses.at(-1)?.[0] === solution) {
+                console.log(color.magenta(`\nYou solved it in ${guesses.length} guesses! Well done :D\n`));
+                break;
+            }
+            const guess = (await getInput(`Guess #${guesses.length + 1}:  `)).toUpperCase().replaceAll(' ', '');
+            if (guess === 'Q' || guess === 'G') {            
+                console.log(`${color.yellow("\nThe answer was: ")}${color.magenta([...solution].map(x => ` ${x} `).join(''))}${color.yellow(" >:)")}`);
+                if (guess === 'Q') {
+                    console.log(`${color.yellow('Bye, hope you had fun!! ^o^\n')}`);
+                    return;
+                }
+            } else if (guess === 'L') {
+                console.log('\n', color.green(myList.join('  ')));
+            } else if (allWords.has(guess)) {
+                const colCode = colorCode(guess, solution);
+                const expectation = expectedBucketSize(guess, myList);
+                const bestGuess = (guesses.length === 0 ? 'ROATE' : bestWord(myList)), bestExpect = expectedBucketSize(bestGuess, myList);
+                guesses.push([guess, colCode, (myList = filteredList(guess, myList, colCode)).length, expectation, bestGuess, bestExpect]);
+            } else {
+                console.log(`${color.brightred("Not a valid guess! See ")}${color.lightblue('all_guesses.txt')}${color.brightred(" for a list of guessable words.")}`);
+                console.log(`${color.lightblue("G")}${color.brightred(" to give up this round")}, ${color.lightblue("L")}${color.brightred(" to peek at the list of possible words")}, ${color.lightblue("Q")}${color.brightred(" to quit to main menu.")}`);
+                continue;
+            }
+        }
+    }
+}
+
+
+
 /**
  * 'Plays' Wordle by trying to guess a word only known to the user. Expects input from the user as to the color-coded feedback of each guess.
  * The feedback must be provided as a 5-character string with only these characters: `B, Y, G` or the corresponding numbers `0, 1, 2`.
  */
 async function AIPlay() {
-    console.log(`\nLet's play Wordle! I'll guess and you tell me the colors! :)`);
+    console.log(`${color.yellow("\nLet's play Wordle! I'll guess and you tell me the colors! :)")}`);
     while (true) {
         let myList = currList.slice();
         const guesses = [];
@@ -71,10 +113,10 @@ async function AIPlay() {
                 break;
             }
             guesses.push([guesses.length === 0 ? 'ROATE' : bestWord(myList)]);
-            console.log();
+            if (guesses.length > 1) console.log();
             guesses.slice(0, -1).forEach(([guess, colorCode, poss], i) => console.log(`Guess #${i+1}: ${colorize(guess, colorCode)}  (${poss} possibilities)`));
             if (guesses.at(-2)?.[1] === 242) {
-                console.log(color.magenta(`\nI won in ${guesses.length - 1} guesses!! ^.^`));
+                console.log(color.lightblue(`\nI won in ${guesses.length - 1} guesses!! ^.^`));
                 break;
             }
             while (true) {
@@ -87,11 +129,11 @@ async function AIPlay() {
                     guesses.at(-1).push(myList.length);
                     break;
                 } else if (feedback === "Q") {
-                    console.log(`${color.lightblue('Thank you, I had fun!! :D\n')}`);
+                    console.log(`${color.yellow('\nThank you, I had fun!! :D\n')}`);
                     return;
                 } else {
                     console.log(`${color.brightred('Invalid feedback, please enter exactly 5 characters, made up of: B, Y, G, 0, 1 or 2. ')}`);
-                    console.log(`${color.brightred("For example, if you're thinking of LUNAR and I guess SOLAR, you would enter ")}${color.brightwhite("00122")}${color.brightred(" or ")}${color.brightwhite("BBYGG")}`);
+                    console.log(`${color.brightred("For example, if you're thinking of LUNAR and I guess SOLAR, you would enter ")}${color.gray("00")}${color.yellow("1")}${color.green("22")}${color.brightred(" or ")}${color.gray("BB")}${color.yellow("Y")}${color.green("GG")}`);
                     console.log(`${color.brightred("Type ")}${color.lightblue('Q')}${color.brightred(' to quit.')}`);
                 }
             }
@@ -117,9 +159,9 @@ function computeMeanGuesses() {
         console.log(guesses, totalGuesses / allGuessesList.length);
         appendFile('all_guesses.txt', guesses.join(',') + '\n');
     }
-    console.log(`Done calculating all words! You may view guess-sequences for all words in ${color.lightblue('all_guesses.txt')}.\n`);
-    console.log("Mean number of guesses required =", totalGuesses / allGuessesList.length);
-    console.log("Compared to MIT's (3.421) =", totalGuesses / allGuessesList.length / 3.421, "\n");
+    console.log(`${color.magenta(`Done calculating all words!`)} You may view guess-sequences for all words in ${color.lightblue('all_guesses.txt')}.\n`);
+    console.log("Mean number of guesses required =", color.yellow((totalGuesses / allGuessesList.length).toFixed(3)));
+    console.log("Compared to MIT's (3.421) =", color.yellow((totalGuesses / allGuessesList.length / 3.421).toFixed(3)), "\n");
 }
 
 /**
@@ -140,7 +182,6 @@ function guessesForWord(word) {
  * Returns a new (sub-)list of words from `currList` which satisfy the `colorCode` obtained by guessing the word `guess`.
  */
 function filteredList(guess, currList, colCode) { return currList.filter(word => colorCode(guess, word) === colCode); }
-
 
 /**
  * Returns the word which minimizes the expected length of the new list of words obtained by guessing it.
@@ -226,5 +267,5 @@ function expectedBucketSize(guess, currList) {
 
 function colorize(guess, colorCode) {
     const colorStr = colorCode.toString(3).padStart(5, '0');
-    return [...guess].map(x => ` ${x} `).map((ch, i) => [x => x, color.yellow, color.green][+colorStr[i]](ch)).join(' ');
+    return [...guess].map(x => ` ${x} `).map((ch, i) => [x => x, color.yellowBG, color.greenBG][+colorStr[i]](ch)).join(' ');
 }
