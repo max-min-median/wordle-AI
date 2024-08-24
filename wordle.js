@@ -30,7 +30,7 @@ const color = {
     while (true) {
         console.log(`${color.lightblue("MMM's Wordle AI v1.0.0")} by ${color.green("max-min-median")}`);
         console.log(`──────────────────────────────────────────`);
-        console.log(`${color.brightwhite('[1]')} Play Wordle! (under development!)`);
+        console.log(`${color.brightwhite('[1]')} Play Wordle!`);
         console.log(`${color.brightwhite('[2]')} Let the AI guess your word`);
         console.log(`${color.brightwhite('[3]')} Inspect AI's guess-sequence for a word`);
         console.log(`${color.brightwhite('[4]')} See this AI's stats`);
