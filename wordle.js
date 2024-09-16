@@ -3,10 +3,10 @@ const { appendFile } = require('./writeFile');
 const { getInput } = require('./getInput');
 const allWords = new Map();
 const allWordsArray = [];
-readFile("guessables.txt").forEach((x, i) => {allWords.set(x.toUpperCase(), i); allWordsArray[i] = x.toUpperCase()});
+readFile("wordle_guessables.txt").forEach((x, i) => {allWords.set(x, i); allWordsArray[i] = x});
 const answers = new Map();
 const currList = [];
-readFile("answers.txt").forEach((x, i) => {answers.set(x.toUpperCase(), allWords.get(x.toUpperCase())); currList.push(x.toUpperCase()); });
+readFile("wordle_solutions.txt").forEach((x, i) => {answers.set(x, allWords.get(x)); currList.push(x); });
 // const colorCodings = new Map();
 
 const color = {
