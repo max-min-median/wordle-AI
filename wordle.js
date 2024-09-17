@@ -28,7 +28,7 @@ const color = {
  */
 (async function main() {
     while (true) {
-        console.log(`${color.lightblue("MMM's Wordle AI v1.0.0")} by ${color.green("max-min-median")}`);
+        console.log(`${color.lightblue("MMM's Wordle AI v1.1.0")} by ${color.green("max-min-median")}`);
         console.log(`──────────────────────────────────────────`);
         console.log(`${color.brightwhite('[1]')} Play Wordle!`);
         console.log(`${color.brightwhite('[2]')} Let the AI guess your word`);
