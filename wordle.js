@@ -193,7 +193,7 @@ function bestWord(currList) {
     for (const word of allWordsArray) {
         const expectation = expectedBucketSize(word, currList);
         if (expectation < minExpectation || (expectation === minExpectation && !bestIsASolution && answers.has(word)))
-            best = word, minExpectation = expectation, bestIsASolution = answers.has(word);
+            best = word, minExpectation = expectation, bestIsASolution = currList.includes(word);
             // console.log(`Found new best word: ${best} (Expectation: ${minExpectation})`);
         // tryList.push([word, expectation]);
     }
