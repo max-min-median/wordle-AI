@@ -1,12 +1,10 @@
-const { readFile } = require('./readFile');
+const { readFile } = require('../readFile');
 const { appendFile } = require('./writeFile');
 const { getInput } = require('./getInput');
-const allWords = new Map();
-const allWordsArray = [];
-readFile("wordle_guessables.txt").forEach((x, i) => {allWords.set(x, i); allWordsArray[i] = x});
-const answers = new Map();
-const currList = [];
-readFile("wordle_solutions.txt").forEach((x, i) => {answers.set(x, allWords.get(x)); currList.push(x); });
+const allWords = new Set();
+readFile("wordle_guessables.txt").forEach(x => allWords.add(x));
+const solutions = new Set();
+readFile("wordle_solutions.txt").forEach(x => solutions.add(x));
 // const colorCodings = new Map();
 
 const color = {
@@ -42,7 +40,7 @@ const color = {
             case '3':
                 while (true) {
                     const word = (await getInput(`Enter a word to see how I would guess it (${color.lightblue('Q')} to quit): `)).toUpperCase().trim();
-                    if (answers.has(word)) {
+                    if (solutions.has(word)) {
                         console.log(guessesForWord(word));
                     } else if (word === 'Q') {
                         console.log();
@@ -63,8 +61,8 @@ async function playWordle() {
     console.log(`${color.yellow("\nLet's play Wordle! Try to guess a 5-letter word! :) ")}${color.lightblue('Q')}${color.yellow(" to quit")}`);
     while (true) {
         const guesses = [];
-        let myList = currList.slice();
-        const solution = [...answers.keys()][Math.floor(Math.random() * answers.size) + 1];
+        let myList = new Set(solutions);
+        const solution = [...solutions.keys()][Math.floor(Math.random() * solutions.size) + 1];
         // console.log(`The secret answer is ${solution}!`);
         while (true) {
             console.log();
@@ -79,14 +77,16 @@ async function playWordle() {
                 if (guess === 'Q') {
                     console.log(`${color.yellow('Bye, hope you had fun!! ^o^\n')}`);
                     return;
+                } else {
+                    break;
                 }
             } else if (guess === 'L') {
-                console.log('\n', color.green(myList.join('  ')));
+                console.log('\n', color.green(Array.from(myList).join('  ')));
             } else if (allWords.has(guess)) {
                 const colCode = colorCode(guess, solution);
-                const expectation = expectedBucketSize(guess, myList);
-                const bestGuess = (guesses.length === 0 ? 'ROATE' : bestWord(myList)), bestExpect = expectedBucketSize(bestGuess, myList);
-                guesses.push([guess, colCode, (myList = filteredList(guess, myList, colCode)).length, expectation, bestGuess, bestExpect]);
+                const expectation = sumSquares(guess, myList) / myList.size;
+                const bestGuess = (guesses.length === 0 ? 'ROATE' : bestWord(myList)), bestExpect = sumSquares(bestGuess, myList) / myList.size;
+                guesses.push([guess, colCode, (myList = filteredList(guess, myList, colCode)).size, expectation, bestGuess, bestExpect]);
             } else {
                 console.log(`${color.brightred("Not a valid guess! See ")}${color.lightblue('all_guesses.txt')}${color.brightred(" for a list of guessable words.")}`);
                 console.log(`${color.lightblue("G")}${color.brightred(" to give up this round")}, ${color.lightblue("L")}${color.brightred(" to peek at the list of possible words")}, ${color.lightblue("Q")}${color.brightred(" to quit to main menu.")}`);
@@ -105,7 +105,7 @@ async function playWordle() {
 async function AIPlay() {
     console.log(`${color.yellow("\nLet's play Wordle! I'll guess and you tell me the colors! :)")}`);
     while (true) {
-        let myList = currList.slice();
+        let myList = new Set(solutions);
         const guesses = [];
         while (true) {
             if (myList.length === 0) {
@@ -151,13 +151,13 @@ function computeMeanGuesses() {
     let allGuessesList = readFile('all_guesses.txt');
     if (allGuessesList instanceof Error) allGuessesList = []; else allGuessesList = allGuessesList.map(x => x.split(','));
     let totalGuesses = allGuessesList.flat().length;
-    const solutionsToDo = [...answers.keys()].slice(allGuessesList.length);
+    const solutionsToDo = [...solutions.keys()].slice(allGuessesList.length);
     for (const solution of solutionsToDo) {
         const guesses = guessesForWord(solution);
         allGuessesList.push(guesses);
         totalGuesses += guesses.length;
         console.log(guesses, totalGuesses / allGuessesList.length);
-        appendFile('all_guesses.txt', guesses.join(',') + '\n');
+        appendFile('all_guesses.txt', guesses.join(' ') + '\n');
     }
     console.log(`${color.magenta(`Done calculating all words!`)} You may view guess-sequences for all words in ${color.lightblue('all_guesses.txt')}.\n`);
     console.log("Mean number of guesses required =", color.yellow((totalGuesses / allGuessesList.length).toFixed(3)));
@@ -168,7 +168,7 @@ function computeMeanGuesses() {
  * Returns the sequence of guesses that this AI would eventually use to guess `word`.
  */
 function guessesForWord(word) {
-    let myList = filteredList('ROATE', currList.slice(), colorCode('ROATE', word));
+    let myList = filteredList('ROATE', solutions, colorCode('ROATE', word));
     const guesses = ['ROATE'];
     while (guesses.at(-1) !== word) {
         const guess = bestWord(myList);
@@ -181,19 +181,25 @@ function guessesForWord(word) {
 /**
  * Returns a new (sub-)list of words from `currList` which satisfy the `colorCode` obtained by guessing the word `guess`.
  */
-function filteredList(guess, currList, colCode) { return currList.filter(word => colorCode(guess, word) === colCode); }
+function filteredList(guess, currList, colCode) {
+    const newSet = new Set();
+    for (const word of currList) {
+        if (colorCode(guess, word) === colCode) newSet.add(word);
+    }
+    return newSet;
+}
 
 /**
  * Returns the word which minimizes the expected length of the new list of words obtained by guessing it.
  */
 function bestWord(currList) {
-    if (currList.length <= 2) return currList[0];
-    let best = undefined, minExpectation = Infinity, bestIsASolution = false;
-    const tryList = [];
-    for (const word of allWordsArray) {
-        const expectation = expectedBucketSize(word, currList);
-        if (expectation < minExpectation || (expectation === minExpectation && !bestIsASolution && answers.has(word)))
-            best = word, minExpectation = expectation, bestIsASolution = currList.includes(word);
+    if (currList.size <= 2) return currList.values().next().value;
+    let best = undefined, minSumSq = Infinity, bestIsASolution = false;
+    // const tryList = [];
+    for (const word of allWords) {
+        const sumSq = sumSquares(word, currList);
+        if (sumSq < minSumSq || (sumSq === minSumSq && !bestIsASolution && currList.has(word)))
+            best = word, minSumSq = sumSq, bestIsASolution = currList.has(word);
             // console.log(`Found new best word: ${best} (Expectation: ${minExpectation})`);
         // tryList.push([word, expectation]);
     }
@@ -218,9 +224,6 @@ function colorCode(guess, solution) {
     // }
     // result = 0;
     let result = 0;
-
-    if (typeof guess === 'number') guess = allWordsArray[guess];
-    if (typeof solution === 'number') solution = allWordsArray[solution];
     const wordLength = 5;
     solution = [...solution], guess = [...guess];
     // let resultString = [...'.....'];
@@ -249,20 +252,20 @@ function colorCode(guess, solution) {
 }
 
 /**
- * Returns the expected size of the new list of words obtained by guessing `guess`, assuming that the solution is a
+ * Returns the sum of squares of the numbers of words in each bucket obtained by guessing `guess`, assuming that the solution is a
  * uniformly random word in `currList`.
  */
-function expectedBucketSize(guess, currList) {
-    const buckets = new Map();
+function sumSquares(guess, currList) {
+    const buckets = Array(243).fill(0);
     for (const word of currList) {
         const bucket = colorCode(guess, word);
-        buckets.set(bucket, (buckets.get(bucket) ?? 0) + 1);
+        buckets[bucket]++;
     }
     let sumSq = 0;
-    for (const bucketSize of buckets.values()) {
+    for (const bucketSize of buckets) {
         sumSq += bucketSize ** 2;
     }
-    return sumSq / currList.length;
+    return sumSq;
 }
 
 function colorize(guess, colorCode) {
