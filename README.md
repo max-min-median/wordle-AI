@@ -1,15 +1,24 @@
 # wordle-AI
 
-An AI coded in `Node.js` to solve the word game [Wordle](https://www.nytimes.com/games/wordle/index.html), which exploded in popularity in 2022.
+An AI (with versions in `Node.js` and `C`) to solve the word game [Wordle](https://www.nytimes.com/games/wordle/index.html), which exploded in popularity in 2022.
 
-This solver is (only) `3.5%` worse than [MIT's](https://auction-upload-files.s3.amazonaws.com/Wordle_Paper_Final.pdf) solver, a playable version of which can be found [here](http://wordle-page.s3-website-us-east-1.amazonaws.com/).
+This solver is (only) `1.785%` worse than [MIT's](https://auction-upload-files.s3.amazonaws.com/Wordle_Paper_Final.pdf) solver, a playable version of which can be found [here](http://wordle-page.s3-website-us-east-1.amazonaws.com/).
 
 ## Instructions
 
-Clone this repository, then run
+Clone this repository.
+- Node.JS
 ```
+cd JS
 node wordle.js
 ```
+- C
+```
+cd C
+wordle.exe
+```
+Note: The `C` version is more up-to-date.
+
 ![Main menu](./wordle0.png)
 
 ---
@@ -50,7 +59,7 @@ You may find out how the AI would guess a particular word. This displays the seq
 
 Calculates the average number of guesses required to guess every single word in the solution list (of 2,315 words). This is compared to MIT's optimal Wordle solver.
 
-I'm pleased to say that my 'peasant AI' is **only 3.5% worse** than MIT's premium algorithm! 🦾🤖🦾
+I'm pleased to say that my 'peasant AI' is **only 1.785% worse** than MIT's premium algorithm! 🦾🤖🦾
 
 ## Dependencies
 - None
@@ -108,4 +117,4 @@ However, my AI says it's `ROATE`, so that's what it uses.
 
 | | MIT's | MMM's |
 | --- | :---: | :---: |
-| Avg # Guesses| `3.421` | `3.541` (+3.5%) |
+| Avg # Guesses| `3.421` | `3.482` (+1.785%) |
